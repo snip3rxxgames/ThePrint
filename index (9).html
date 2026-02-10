@@ -1,0 +1,1057 @@
+
+                    <!DOCTYPE html>
+                    <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <style></style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Print</title>
+    <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet">
+    <style>
+        /* --- GLOBAL RESET & CURSOR HIDING --- */
+        :root { --seasonal-color: #ff0066; } 
+        * { box-sizing: border-box; outline: none; cursor: none !important; /* HIDE DEFAULT CURSOR */ }
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            height: 100vh; 
+            overflow: hidden; 
+            background-color: #111; 
+            color: #ffffff; 
+            display: flex; 
+            flex-direction: column; 
+            user-select: none; 
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        #custom-cursor {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 20px;
+            height: 20px;
+            pointer-events: none; 
+            z-index: 99999;
+            transition: width 0.2s, height 0.2s, transform 0.1s;
+            mix-blend-mode: difference;
+            display: none; 
+            
+            /* Default Ring Style */
+            border: 2px solid #00F3FF;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00F3FF;
+            transform: translate(-50%, -50%);
+        }
+
+        /* The Dot in the center of the ring */
+        #custom-cursor::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: #00F3FF;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s;
+        }
+
+        /* --- HOVER STATE (THE REAL HAND) --- */
+        #custom-cursor.hover-active {
+            width: auto;
+            height: auto;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            background: transparent;
+            mix-blend-mode: normal; 
+            
+            /* Center the emoji hand */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            /* Position adjustment so the finger tip hits the button */
+            transform: translate(-15px, -5px); 
+        }
+
+        /* The 3D Hand Model (Emoji) */
+        #custom-cursor.hover-active::before {
+            content: '👆'; /* This renders as a 3D model on Windows/Mac/Android */
+            font-size: 40px;
+            /* Add a cool sci-fi glow behind the real hand */
+            filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.6));
+            animation: handPulse 2s infinite ease-in-out;
+        }
+
+        /* Hide the center dot when it becomes a hand */
+        #custom-cursor.hover-active::after {
+            opacity: 0;
+        }
+
+        @keyframes handPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Click animation */
+        body.is-clicking #custom-cursor {
+            transform: translate(-50%, -50%) scale(0.8);
+        }
+        body.is-clicking #custom-cursor.hover-active {
+            /* Tapping motion */
+            transform: translate(-15px, -5px) scale(0.9) rotate(-10deg);
+        }
+
+        /* --- BACKGROUND --- */
+        #bgCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.5; }
+
+        /* --- HEADER --- */
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 0 40px; height: 60px; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 50; flex-shrink: 0; border-bottom: 1px solid #333; }
+        .header-left { display: flex; align-items: center; gap: 30px; }
+        .site-title { font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; color: #fff; text-transform: uppercase; }
+        .nav-links { display: flex; gap: 20px; }
+        .nav-item { color: #bbb; text-decoration: none; font-size: 14px; font-weight: 600; text-transform: uppercase; transition: 0.3s; padding-bottom: 5px; }
+        .nav-item:hover { color: #fff; }
+        .nav-item.active { color: #00F3FF; text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+        #nav-seasonal:hover { color: var(--seasonal-color); }
+        #nav-seasonal.active { color: var(--seasonal-color); text-shadow: 0 0 15px var(--seasonal-color); }
+
+        /* HEADER RIGHT */
+        .header-right { display: flex; align-items: center; gap: 20px; position: relative; }
+        .scribble-container { position: absolute; right: 85px; top: 25px; display: flex; align-items: center; pointer-events: none; transform: rotate(-8deg); z-index: 60; }
+        .scribble-text { font-family: 'Permanent Marker', cursive; color: #00F3FF; font-size: 18px; text-shadow: 0 0 5px rgba(0, 243, 255, 0.8); margin-right: 5px; }
+        .scribble-arrow { width: 40px; height: 30px; stroke: #00F3FF; stroke-width: 2; fill: none; stroke-linecap: round; filter: drop-shadow(0 0 2px rgba(0, 243, 255, 0.8)); }
+        .icon-btn { background: transparent; border: none; color: #fff; position: relative; font-size: 20px; transition: 0.3s; display:flex; align-items:center; justify-content:center; }
+        .icon-btn:hover { color: #00F3FF; transform: scale(1.1); }
+        .cart-badge { position: absolute; top: -8px; right: -8px; background: #00F3FF; color: #000; font-size: 10px; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        /* --- CONTENT --- */
+        .main-content { flex-grow: 1; overflow-y: auto; padding: 30px; position: relative; z-index: 10; }
+        .main-content::-webkit-scrollbar { width: 8px; }
+        .main-content::-webkit-scrollbar-track { background: #111; }
+        .main-content::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        .page-section { display: none; animation: fadeIn 0.4s ease; width: 100%; height: 100%; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* HOME */
+        .home-layout { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80%; width: 100%; position: relative; }
+        .search-wrapper { position: relative; width: 60%; margin-bottom: 40px; text-align: center; }
+        .holo-input { width: 100%; background: transparent; border: none; color: #fff; font-size: 3rem; font-weight: 200; text-align: center; padding: 20px 0; letter-spacing: 2px; text-transform: uppercase; }
+        .holo-input::placeholder { color: #555; font-weight: 100; transition: 0.3s; }
+        .holo-input:focus::placeholder { opacity: 0; }
+        .search-line { width: 0%; height: 2px; background: #00F3FF; margin: 0 auto; box-shadow: 0 0 10px #00F3FF; transition: width 0.5s ease; }
+        .search-wrapper:hover .search-line, .holo-input:focus + .search-line { width: 100%; }
+        .btn-ghost-search { position: absolute; right: 0; top: 50%; transform: translateY(-50%); background: transparent; color: #555; border: none; font-size: 30px; transition: 0.3s; }
+        .search-wrapper:hover .btn-ghost-search { color: #00F3FF; }
+        .std-nav-btn { background: rgba(0, 243, 255, 0.05); border: 1px solid #00F3FF; color: #00F3FF; padding: 12px 30px; font-size: 1rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; border-radius: 4px; transition: 0.3s; }
+        .std-nav-btn:hover { background: #00F3FF; color: #000; box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+
+        /* CREDIT FOOTER */
+        .credit-footer {
+            position: absolute;
+            bottom: 10px;
+            font-size: 11px;
+            color: #444;
+            font-family: monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.7;
+            transition: 0.3s;
+        }
+        .credit-footer:hover { opacity: 1; color: #00F3FF; }
+
+        /* GRID */
+        .section-title { font-size: 1.5rem; margin-bottom: 20px; color: #00F3FF; text-transform: uppercase; border-left: 4px solid #00F3FF; padding-left: 15px; }
+        #seasonal-title-header { color: var(--seasonal-color); border-left-color: var(--seasonal-color); }
+        
+        .prints-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; padding-bottom: 20px; width: 100%; }
+        
+        .print-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; overflow: hidden; position: relative; transition: 0.3s; aspect-ratio: 1 / 1.2; display: flex; flex-direction: column; }
+        .print-card:hover { transform: translateY(-3px); border-color: #00F3FF; box-shadow: 0 0 15px rgba(0, 243, 255, 0.2); }
+        .card-image-container { width: 100%; height: 75%; background: #111; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .card-image { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+        .print-card:hover .card-image { transform: scale(1.05); }
+        .card-details { height: 25%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.8); border-top: 1px solid #333; padding: 5px; }
+        .card-title { font-size: 14px; font-weight: bold; color: #ddd; text-align: center; margin-bottom: 4px; }
+        .card-price { font-size: 13px; color: #00F3FF; font-family: monospace; }
+        
+        .add-hover-btn { position: absolute; bottom: 0; right: 0; width: 40px; height: 40px; background: #00F3FF; color: #000; border-radius: 10px 0 0 0; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(100%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 6; }
+        .force-hover .add-hover-btn { opacity: 1 !important; transform: translateY(0) !important; }
+        .print-card:hover .add-hover-btn { opacity: 1; transform: translateY(0); }
+        .magnify-hover-btn { position: absolute; bottom: 0; right: 40px; width: 40px; height: 40px; background: #111; color: #fff; border: 1px solid #333; border-bottom: none; border-right: none; border-radius: 10px 0 0 0; font-size: 18px; display: flex; align-items: center; justify-content: center; opacity: 0; transform: translateY(100%); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.05s; z-index: 5; }
+        .magnify-hover-btn:hover { background: #333; color: #00F3FF; }
+        .print-card:hover .magnify-hover-btn { opacity: 1; transform: translateY(0); }
+
+        /* FOOTER MESSAGE */
+        .prints-footer-msg { text-align: center; margin-top: 50px; padding: 30px; border-top: 1px solid #333; color: #aaa; font-size: 1rem; }
+        .prints-footer-msg span { color: #00F3FF; text-decoration: underline; font-weight: bold; margin: 0 5px; transition: 0.3s; }
+        .prints-footer-msg span:hover { color: #fff; text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+
+        /* EMPTY PLACEHOLDER */
+        .empty-placeholder { grid-column: 1 / -1; text-align: center; padding: 40px; color: #555; font-style: italic; border: 1px dashed #333; border-radius: 8px; }
+
+        /* RESTOCK */
+        .info-panel { background: rgba(10, 10, 10, 0.6); border: 1px solid #444; border-radius: 8px; padding: 15px; text-align: center; width: 80%; margin: 0 auto 30px auto; }
+        .info-panel h2 { color: #00F3FF; margin-top: 0; font-size: 1.2rem; margin-bottom: 5px; }
+        .info-panel p { color: #ddd; font-size: 0.9rem; margin: 0; }
+        .legend-box { margin-top: 20px; margin-bottom: 40px; border-top: 1px solid #333; padding-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; width: 100%; }
+        .legend-item { display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .legend-badge { display: inline-block; padding: 4px 10px; font-weight: 800; font-size: 12px; text-transform: uppercase; border-radius: 4px; color: #000; margin-bottom: 10px; }
+        .status-badge { position: absolute; top: 10px; right: 10px; padding: 4px 8px; font-weight: 800; font-size: 10px; text-transform: uppercase; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.5); z-index: 5; color: #000; }
+        .status-defect { background: #ff4444; border: 1px solid #ff0000; }
+        .status-unpaid { background: #ffcc00; border: 1px solid #cca300; }
+        .legend-text { color: #bbb; font-size: 0.9rem; line-height: 1.4; max-width: 300px; }
+
+        /* MODALS */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(5px); }
+        .modal-content { background: #111; border: 1px solid #333; border-radius: 8px; width: 90%; max-width: 400px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.8); overflow-y: auto; }
+        .modal-header { padding: 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header h2 { margin: 0; font-size: 18px; color: #00F3FF; text-transform: uppercase; }
+        .close-btn { font-size: 24px; color: #777; }
+        .close-btn:hover { color: #fff; }
+
+        /* QUALITY & COLOR SELECTOR */
+        .quality-body { padding: 20px; }
+        .quality-opts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .q-opt { border: 1px solid #333; padding: 12px; border-radius: 6px; background: #0a0a0a; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+        .q-opt:hover { border-color: #666; background: #151515; }
+        .q-opt.selected { border-color: #00F3FF; background: rgba(0, 243, 255, 0.05); box-shadow: 0 0 10px rgba(0, 243, 255, 0.1); }
+        .q-opt b { font-size: 15px; color: #fff; }
+        .q-opt small { color: #777; font-size:12px; }
+        .q-price { color: #00F3FF; font-family: monospace; font-weight: bold; }
+        
+        /* COLOR SWATCHES */
+        .color-section-title { font-size: 14px; color: #aaa; text-transform: uppercase; font-weight: bold; margin-bottom: 10px; margin-top: 10px; }
+        .swatch-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .swatch-container { display: flex; flex-direction: column; align-items: center; width: 45px; }
+        .swatch { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #333; position: relative; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        .swatch:hover { transform: scale(1.1); border-color: #fff; }
+        .swatch.selected { border-color: #00F3FF; box-shadow: 0 0 10px #00F3FF; transform: scale(1.1); }
+        .swatch-name { font-size: 10px; color: #777; margin-top: 4px; text-align: center; line-height: 1.1; }
+        .swatch.selected + .swatch-name { color: #00F3FF; font-weight: bold; }
+        
+        /* QTY SELECTOR */
+        .qty-wrapper { display: flex; justify-content: space-between; align-items: center; background: #050505; border: 1px solid #222; padding: 10px; border-radius: 6px; margin-bottom: 20px; }
+        .qty-controls { display: flex; align-items: center; gap: 10px; }
+        .qty-btn { width: 30px; height: 30px; background: #222; border: 1px solid #444; color: #fff; font-weight: bold; border-radius: 4px; transition: 0.2s; }
+        .qty-btn:hover { background: #333; border-color: #00F3FF; color: #00F3FF; }
+        .qty-val { font-size: 18px; font-weight: bold; color: #fff; min-width: 20px; text-align: center; font-family: monospace; }
+        .qty-label { color: #aaa; font-size: 14px; text-transform: uppercase; font-weight: bold; }
+
+        /* NOTIFICATIONS */
+        .notification-pop { position: fixed; top: 20px; left: -350px; width: 300px; background: rgba(15, 15, 15, 0.95); border: 1px solid #333; border-left: 5px solid #00F3FF; box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); padding: 20px; z-index: 8000; border-radius: 0 4px 4px 0; transition: left 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; flex-direction: column; gap: 10px; backdrop-filter: blur(5px); }
+        .notification-pop.active { left: 20px; }
+        .notif-title { font-weight: bold; color: #00F3FF; text-transform: uppercase; font-size: 14px; }
+        .notif-text { font-size: 13px; color: #ccc; line-height: 1.4; margin-bottom: 5px; }
+        .notif-actions { display: flex; gap: 10px; }
+        .btn-mini { padding: 6px 12px; font-size: 11px; text-transform: uppercase; border: 1px solid #444; background: transparent; color: #aaa; border-radius: 3px; font-weight: bold; transition: 0.2s; }
+        .btn-mini:hover { color: #fff; border-color: #fff; }
+        .btn-mini.primary { border-color: #00F3FF; color: #00F3FF; background: rgba(0,243,255,0.05); }
+
+        /* CART & FORMS */
+        .cart-list-container { flex-grow: 1; overflow-y: auto; padding: 15px; min-height: 100px; }
+        .cart-item { background: #1a1a1a; border: 1px solid #333; padding: 10px; margin-bottom: 8px; font-size: 14px; display: grid; grid-template-columns: 1fr auto; gap: 5px; }
+        .cart-add-section { padding: 15px; background: #0a0a0a; border-top: 1px solid #222; }
+        input, textarea { width: 100%; padding: 8px; margin-bottom: 8px; background: #000; border: 1px solid #333; color: #fff; }
+        .btn-submit { width: 100%; padding: 10px; background: #00F3FF; border: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; }
+        #toast { visibility: hidden; min-width: 200px; background-color: #00F3FF; color: #000; text-align: center; border-radius: 4px; padding: 10px; position: fixed; z-index: 200; left: 50%; bottom: 30px; transform: translateX(-50%); font-weight: bold; opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        /* CHECKOUT MODAL STYLES */
+        .pay-step { display: none; padding: 20px; text-align: center; }
+        .pay-step.active { display: block; }
+        .pay-btn { display: block; width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 5px; font-weight: bold; text-align: center; text-transform: uppercase; border: none; color: white; transition: 0.3s; font-size: 14px; letter-spacing: 1px; }
+        .pay-venmo { background-color: #3D95CE; box-shadow: 0 4px 0 #286389; }
+        .pay-venmo:hover { background-color: #4da7e1; transform: translateY(-2px); }
+        .pay-paypal { background-color: #003087; box-shadow: 0 4px 0 #001f57; } 
+        .pay-paypal:hover { background-color: #0042b5; transform: translateY(-2px); }
+        .pay-status { color: #888; margin-bottom: 20px; font-style: italic; }
+        .success-msg { color: #00F3FF; line-height: 1.6; font-size: 14px; margin-top: 10px; }
+        
+        /* INSPECT */
+        .inspect-body { padding: 20px; text-align: center; }
+        .inspect-img { width: 100%; max-height: 300px; object-fit: contain; border: 1px solid #333; margin-bottom: 15px; background: #000; }
+        .inspect-details { text-align: left; background: #050505; padding: 10px; border-radius: 6px; border: 1px solid #222; }
+        .inspect-row { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .inspect-label { color: #777; font-size: 12px; text-transform: uppercase; }
+        .inspect-val { color: #fff; font-weight: bold; font-size: 14px; }
+
+        /* TUTORIAL */
+        #tutorial-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9000; display: none; }
+        .spotlight { position: absolute; border-radius: 50%; border: 2px solid #00F3FF; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4); transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1); pointer-events: none; }
+        .tutorial-box { position: absolute; background: #111; border: 1px solid #00F3FF; padding: 20px; width: 280px; border-radius: 8px; box-shadow: 0 0 30px rgba(0, 243, 255, 0.2); z-index: 9002; pointer-events: auto; transition: all 0.5s ease; }
+        .tutorial-text { margin-bottom: 15px; line-height: 1.5; color: #eee; font-size: 14px; }
+        .tut-btn { background: #00F3FF; color: #000; border: none; padding: 6px 14px; font-weight: bold; border-radius: 4px; float: right; }
+        .tut-btn-hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div id="custom-cursor"></div>
+    <canvas id="bgCanvas"></canvas>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="site-title">The Print</div>
+            <nav class="nav-links">
+                <a id="nav-home" class="nav-item active" onclick="switchPage('home')">Home</a>
+                <a id="nav-prints" class="nav-item" onclick="switchPage('prints')">Prints</a>
+                <a id="nav-restock" class="nav-item" onclick="switchPage('restock')">Restock</a>
+                <a id="nav-seasonal" class="nav-item" onclick="switchPage('seasonal')">Seasonal</a>
+            </nav>
+        </div>
+        <div class="header-right">
+            <div class="scribble-container">
+                <div class="scribble-text">Tutorial</div>
+                <svg class="scribble-arrow" viewBox="0 0 50 30">
+                    <path d="M5,20 C15,10 35,25 45,15" fill="none" stroke-width="2" stroke-linecap="round" />
+                    <path d="M38,8 L45,15 L35,20" fill="none" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </div>
+            <button class="icon-btn" onclick="startTutorial()" title="Help / Tour">?</button>
+            <button class="icon-btn" onclick="openCart()">
+                🛒 <div class="cart-badge" id="cart-badge-count">0</div>
+            </button>
+        </div>
+    </header>
+
+    <div id="home" class="main-content page-section active">
+        <div class="home-layout">
+            <div class="search-wrapper">
+                <input type="text" class="holo-input" id="searchInput" placeholder="Search all 3d models" spellcheck="false" autocomplete="off" onkeydown="if(event.key === 'Enter') performSearch()">
+                <div class="search-line"></div>
+                <button class="btn-ghost-search" onclick="performSearch()">⌕</button>
+            </div>
+            <button class="std-nav-btn" onclick="switchPage('prints')">Browse Prints</button>
+            
+            <div class="credit-footer">Made by Michael Roman</div>
+        </div>
+    </div>
+
+    <div id="prints" class="main-content page-section">
+        <div class="section-title">Creator's Prints</div>
+        <div class="prints-grid" id="creators-grid"></div>
+        <div class="prints-footer-msg">
+            Don't see a print you like? <span onclick="switchPage('home'); setTimeout(()=>document.getElementById('searchInput').focus(), 100);">Go to search all prints</span> to find any print you want.
+        </div>
+    </div>
+
+    <div id="restock" class="main-content page-section">
+        <div class="info-panel">
+            <h2>Filament Restock Policy</h2>
+            <p>We restock when we earn ~$20. Orders >50g charged extra.</p>
+        </div>
+        <div class="section-title">Pre-printed Things</div>
+        <div class="prints-grid" id="pre-printed-grid"></div>
+        <div class="legend-box">
+            <div class="legend-item">
+                <div class="legend-badge status-unpaid">UNPAID</div>
+                <div class="legend-text">Prints that no one paid for. They are already printed.</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-badge status-defect">DEFECT</div>
+                <div class="legend-text">Fully functional prints with small cosmetic defects.</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="seasonal" class="main-content page-section">
+        <div class="section-title" id="seasonal-title-header">Seasonal Collection</div>
+        <div class="prints-grid" id="seasonal-grid"></div>
+    </div>
+
+    <div id="toast">Added to Cart</div>
+
+    <div id="qualityModal" class="modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header">
+                <h2>Configure Print</h2>
+                <span class="close-btn" onclick="closeModal('qualityModal')">&times;</span>
+            </div>
+            <div class="quality-body">
+                <p style="color:#aaa; font-size:13px; margin-top:0;">Customize options for <span id="q-item-name" style="color:#fff; font-weight:bold;">--</span>.</p>
+                
+                <div class="quality-opts">
+                    <div class="q-opt selected" id="opt-normal" onclick="selectQuality('normal')">
+                        <div>
+                            <b>Normal</b><br>
+                            <small>Standard Resolution</small>
+                        </div>
+                        <span class="q-price" id="price-normal"></span>
+                    </div>
+                    <div class="q-opt" id="opt-great" onclick="selectQuality('great')">
+                        <div>
+                            <b>Great</b><br>
+                            <small>High Resolution</small>
+                        </div>
+                        <span class="q-price" id="price-great"></span>
+                    </div>
+                    <div class="q-opt" id="opt-amazing" onclick="selectQuality('amazing')">
+                        <div>
+                            <b>Amazing</b><br>
+                            <small>Ultra-Fine Resolution</small>
+                        </div>
+                        <span class="q-price" id="price-amazing"></span>
+                    </div>
+                </div>
+
+                <div class="color-section-title">Filament Color</div>
+                <div class="swatch-grid" id="color-swatches-container">
+                    </div>
+
+                <div class="qty-wrapper">
+                    <span class="qty-label">Quantity</span>
+                    <div class="qty-controls">
+                        <button class="qty-btn" onclick="adjustQty(-1)">-</button>
+                        <span class="qty-val" id="qty-val">1</span>
+                        <button class="qty-btn" onclick="adjustQty(1)">+</button>
+                    </div>
+                </div>
+
+                <button class="btn-submit" id="btn-add-final" onclick="finalizeAddToCart()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cart</h2>
+                <span class="close-btn" onclick="closeModal('cartModal')">&times;</span>
+            </div>
+            <div class="cart-list-container" id="cart-list"></div>
+            <div class="cart-add-section">
+                <input type="text" id="addItemLink" placeholder="MakerWorld Link...">
+                <input type="text" id="addItemName" placeholder="Item Name">
+                <input type="number" id="addItemQty" value="1" min="1">
+                <textarea id="addItemNotes" rows="1" placeholder="Instructions / Color..."></textarea>
+                <button class="btn-submit" onclick="submitItemToCart()">Add Item</button>
+            </div>
+            <div style="padding:10px;">
+                <button class="btn-submit" style="background:transparent; border:1px solid #00F3FF; color:#00F3FF;" onclick="openCheckout()">Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content" style="max-width: 350px;">
+            <div class="modal-header">
+                <h2>Payment</h2>
+                <span class="close-btn" onclick="closeModal('checkoutModal')">&times;</span>
+            </div>
+            
+            <div id="pay-step-1" class="pay-step active">
+                <p style="color:#aaa; font-size:13px; margin-bottom:15px;">Choose a secure payment method:</p>
+                <button class="pay-btn pay-venmo" onclick="handlePayment('venmo')">Venmo</button>
+                <button class="pay-btn pay-paypal" onclick="handlePayment('paypal')">PayPal</button>
+            </div>
+
+            <div id="pay-step-2" class="pay-step">
+                <div class="pay-status">Link opened in new tab...</div>
+                <h3 style="color:#fff; text-transform:uppercase;">Finalize Order</h3>
+                <p style="color:#888; font-size:12px; margin-bottom:20px;">Please click Finish to send your order details.</p>
+                <button class="btn-submit" onclick="finishOrder()">Finish</button>
+            </div>
+
+            <div id="pay-step-3" class="pay-step">
+                <h2 style="color:#00F3FF; margin-bottom:10px;">Success!</h2>
+                <div class="success-msg">
+                    Thank you for your purchase! Your print will arrive anywhere from 1 day to 1 week, but usually closer to one day :)
+                </div>
+                <button class="btn-submit" style="margin-top:20px; background:#222; border:1px solid #444;" onclick="closeModal('checkoutModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="inspectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Inspection</h2>
+                <span class="close-btn" onclick="closeModal('inspectModal')">&times;</span>
+            </div>
+            <div class="inspect-body">
+                <img id="inspect-img" src="" class="inspect-img">
+                <div class="inspect-details">
+                    <div class="inspect-row"><span class="inspect-label">Item</span><span class="inspect-val" id="inspect-name">--</span></div>
+                    <div class="inspect-row"><span class="inspect-label">Color</span><span class="inspect-val" id="inspect-color" style="color:#00F3FF">--</span></div>
+                    <div class="inspect-row"><span class="inspect-label">Condition</span><span class="inspect-val" id="inspect-status">--</span></div>
+                    <div class="inspect-row" style="border:none;"><span class="inspect-label">Price</span><span class="inspect-val" id="inspect-price">$0.00</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content" style="text-align:center; padding:30px;">
+            <div class="modal-header" style="border-bottom:none; margin-bottom:10px;">
+                <h2>Admin Control</h2>
+                <span class="close-btn" onclick="closeModal('adminModal')">&times;</span>
+            </div>
+            <p style="color:#777; font-size:12px; margin-bottom:20px;">Save current setup or load a new one.</p>
+            
+            <button onclick="downloadPrintFile()" style="padding:15px; width:100%; margin-bottom:15px; background:#222; border:1px solid #444; color:#fff; cursor:pointer;">
+                💾 Save Setup (JSON)
+            </button>
+            
+            <div style="position:relative; overflow:hidden; display:inline-block; width:100%;">
+                <button style="padding:15px; width:100%; background:#00F3FF; color:#000; border:none; font-weight:bold; cursor:pointer;">📂 Load Setup</button>
+                <input type="file" onchange="loadPrintFile(this)" style="position:absolute; left:0; top:0; opacity:0; width:100%; height:100%; cursor:pointer;">
+            </div>
+
+            <button onclick="localStorage.removeItem('tutorialDone'); location.reload();" style="margin-top:20px; background:none; border:none; color:#555; cursor:pointer; font-size:12px; text-decoration:underline;">Reset Tutorial</button>
+        </div>
+    </div>
+    
+    <div id="tutorial-notification" class="notification-pop">
+        <div class="notif-title">First time here?</div>
+        <div class="notif-text">Welcome to The Print. Would you like a quick interactive tour?</div>
+        <div class="notif-actions">
+            <button class="btn-mini primary" onclick="acceptTutorial()">Start Tour</button>
+            <button class="btn-mini" onclick="declineTutorial()">Dismiss</button>
+        </div>
+    </div>
+
+    <div id="tutorial-overlay">
+        <div class="spotlight" id="tut-spotlight"></div>
+        <div class="tutorial-box" id="tut-box">
+            <div class="tutorial-text" id="tut-text"></div>
+            <button class="tut-btn" id="tut-next-btn" onclick="nextTutorialStep()">Next</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           --- SECURITY & CURSOR SYSTEM ---
+           ========================================= */
+        
+        // 1. DISABLE Right Click
+        document.addEventListener('contextmenu', event => event.preventDefault());
+
+        // 2. DISABLE Specific Key Combos
+        document.addEventListener('keydown', function(e) {
+            // View Source (Ctrl+U / Cmd+U / Cmd+Opt+U)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
+                e.preventDefault();
+            }
+            // Inspect (Ctrl+Shift+C / Cmd+Opt+C / Cmd+Shift+C)
+            if ((e.ctrlKey || e.metaKey) && (e.shiftKey || e.altKey) && (e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+            }
+        });
+
+        // 3. CUSTOM CURSOR
+        const cursor = document.getElementById('custom-cursor');
+
+        // Mouse Move Handling
+        document.addEventListener('mousemove', (e) => {
+            // Show cursor and move it
+            cursor.style.display = 'block';
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+
+            // Check if hovering over a clickable element
+            const clickable = e.target.closest('a, button, input, textarea, .print-card, .nav-item, .close-btn, .q-opt, .swatch, .add-hover-btn, .magnify-hover-btn');
+            
+            if (clickable) {
+                cursor.classList.add('hover-active');
+            } else {
+                cursor.classList.remove('hover-active');
+            }
+        });
+
+        // Hide when leaving window
+        document.addEventListener('mouseleave', () => {
+            cursor.style.display = 'none';
+        });
+
+        // Show immediately when entering
+        document.addEventListener('mouseenter', () => {
+            cursor.style.display = 'block';
+        });
+
+        // Click animation
+        document.addEventListener('mousedown', () => document.body.classList.add('is-clicking'));
+        document.addEventListener('mouseup', () => document.body.classList.remove('is-clicking'));
+
+
+        /* =========================================
+           --- EXISTING LOGIC ---
+           ========================================= */
+        
+        const qualitySurcharges = { great: 1.00, amazing: 2.00 };
+
+        const filamentColors = [
+            { id: 'black', name: 'Black', bg: '#000000', isDual: false },
+            { id: 'white', name: 'White', bg: '#eeeeee', isDual: false },
+            { id: 'grey',  name: 'Grey',  bg: '#777777', isDual: false },
+            { id: 'gold',  name: 'Gold',  bg: '#d4af37', isDual: false },
+            { id: 'dual1', name: 'Dual: Blu/Grn', bg: 'linear-gradient(135deg, #0000ff 50%, #00ff00 50%)', isDual: true },
+            { id: 'dual2', name: 'Dual: Red/Gold', bg: 'linear-gradient(135deg, #ff0000 50%, #d4af37 50%)', isDual: true }
+        ];
+
+        const seasonalConfig = {
+            name: "Valentines",      
+            emoji: "💘",           
+            color: "#ff0066",    
+            items: [
+                { id: 201, name: "Suspended heart", price: 4.00, image: "https://makerworld.bblmw.com/makerworld/model/US4cc2f9eca60886/design/2024-05-08_28e70814376ae.jpeg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.bblmw.com/makerworld/model/US4cc2f9eca60886/design/2024-05-08_28e70814376ae.jpeg?x-oss-process=image/resize,w_1000/format,webp" },
+                { id: 202, name: "Mini Heart Dragon", price: 3.00, image: "https://makerworld.bblmw.com/makerworld/model/US4db214c902a6c/design/2025-01-17_165f8e4e478b.jpg?x-oss-process=image/resize,w_400/format,webp", link: "https://makerworld.com/en/models/1005001-mini-valentine-s-dragon-noamsneeded?from=search" }
+            ]
+        };
+
+        let creatorPrints = [
+            { id: 1, name: "Articulated Dragon", price: 5.00, image: "https://makerworld.bblmw.com/makerworld/model/USd7d5e9bdad05d2/design/2025-12-21_7b09a079454c98.jpg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.com/en/models/2142966-articulated-crystal-spine-dragon?from=search#profileId-2321381" },
+            { id: 2, name: "Spiral Passthrough Fidget", price: 3.00, image: "https://makerworld.bblmw.com/makerworld/model/USc78dec11e9598c/design/2025-03-19_c4e29874cfd15.jpg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.com/en/models/1225364-spiral-series-impossible-passthrough-hexagon#profileId-1242952" },
+            { id: 3, name: "Fidget Toggle Switch", price: 2.00, image: "https://makerworld.bblmw.com/makerworld/model/USf80a7f896838a8/design/2023-11-17_hz99984hnfj5.jpg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.com/en/models/66670-adjustable-fidget-toggle-switch#profileId-70512" },
+            { id: 4, name: "Infinity Cube", price: 2.00, image: "https://makerworld.bblmw.com/makerworld/model/US2ecaa913482ae4/design/2025-07-03_e4c8e21007a008.jpg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.com/en/models/1572338-infinity-cube-fidget-toy?from=search#profileId-1653876" },
+            { id: 5, name: "Fidget twist", price: 3.00, image: "https://makerworld.bblmw.com/makerworld/model/US63c25b319c6634/design/2024-05-14_f8c8a69787ab.jpg?x-oss-process=image/resize,w_1000/format,webp", link: "https://makerworld.com/en/models/464041-twist-fidget?from=search#profileId-374970" },
+        ];
+
+        let prePrintedItems = []; 
+        let cart = [];
+        let pendingItem = null;
+        let selectedQuality = 'normal'; 
+        let selectedColorObj = filamentColors[0]; 
+        let currentQty = 1;
+
+        window.onload = function() {
+            applySeasonalTheme();
+            try {
+                let savedCart = localStorage.getItem('thePrintCart');
+                if(savedCart) {
+                    cart = JSON.parse(savedCart);
+                    updateCartBadge();
+                }
+            } catch(e) { console.log("Storage blocked"); }
+
+            renderCreatorsGrid();
+            renderPrePrintedGrid();
+            renderSeasonalGrid();
+            resize();
+            draw();
+            
+            /* --- PASSWORD INPUT LOGIC --- */
+            const linkInput = document.getElementById('addItemLink');
+            
+            // Masking Logic
+            linkInput.addEventListener('input', function() {
+                if(this.value.startsWith('P')) {
+                    this.type = 'password';
+                } else {
+                    this.type = 'text';
+                }
+            });
+
+            // Enter Key Logic (Admin Check)
+            linkInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    if (this.value === 'PASSWORD') { // Checks against the hidden value
+                        openModal('adminModal');
+                        this.value = ''; 
+                        this.type = 'text'; // Reset type
+                    }
+                }
+            });
+
+            if(!localStorage.getItem('tutorialDone')) {
+                setTimeout(() => document.getElementById('tutorial-notification').classList.add('active'), 1000);
+            }
+        };
+
+        function applySeasonalTheme() {
+            document.documentElement.style.setProperty('--seasonal-color', seasonalConfig.color);
+            document.getElementById('nav-seasonal').innerText = `${seasonalConfig.emoji} ${seasonalConfig.name}`;
+            document.getElementById('seasonal-title-header').innerText = `${seasonalConfig.name} Collection`;
+        }
+
+        /* --- QUALITY & ADD LOGIC --- */
+        function openQualityModal(link, name, basePrice, category) {
+            pendingItem = { link, name, basePrice: parseFloat(basePrice), category: category };
+            selectedQuality = 'normal';
+            selectedColorObj = filamentColors[0]; 
+            currentQty = 1;
+            document.getElementById('q-item-name').innerText = name;
+            renderColorSelector();
+            updateQualityUI();
+            openModal('qualityModal');
+        }
+
+        function renderColorSelector() {
+            const container = document.getElementById('color-swatches-container');
+            container.innerHTML = '';
+            filamentColors.forEach(col => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'swatch-container';
+                wrapper.onclick = () => selectColor(col);
+                const swatch = document.createElement('div');
+                swatch.className = 'swatch';
+                if(col.id === selectedColorObj.id) swatch.classList.add('selected');
+                swatch.style.background = col.bg;
+                const name = document.createElement('div');
+                name.className = 'swatch-name';
+                name.innerText = col.name;
+                wrapper.appendChild(swatch);
+                wrapper.appendChild(name);
+                container.appendChild(wrapper);
+            });
+        }
+
+        function selectColor(colorObj) {
+            selectedColorObj = colorObj;
+            renderColorSelector(); 
+            updateQualityUI(); 
+        }
+
+        function selectQuality(q) {
+            selectedQuality = q;
+            updateQualityUI();
+        }
+
+        function adjustQty(amount) {
+            currentQty += amount;
+            if(currentQty < 1) currentQty = 1;
+            updateQualityUI();
+        }
+
+        function updateQualityUI() {
+            document.querySelectorAll('.q-opt').forEach(el => el.classList.remove('selected'));
+            document.getElementById(`opt-${selectedQuality}`).classList.add('selected');
+            document.getElementById('qty-val').innerText = currentQty;
+
+            let colorSurcharge = 0;
+            if (selectedColorObj.isDual) {
+                if (pendingItem.basePrice < 5.00) colorSurcharge = 1.00;
+                else colorSurcharge = 1.50;
+            }
+
+            const normalUnit = pendingItem.basePrice + colorSurcharge;
+            const greatUnit = pendingItem.basePrice + qualitySurcharges.great + colorSurcharge;
+            const amazingUnit = pendingItem.basePrice + qualitySurcharges.amazing + colorSurcharge;
+
+            document.getElementById('price-normal').innerText = `$${normalUnit.toFixed(2)}`;
+            document.getElementById('price-great').innerText = `$${greatUnit.toFixed(2)}`;
+            document.getElementById('price-amazing').innerText = `$${amazingUnit.toFixed(2)}`;
+
+            let finalUnitPrice = normalUnit;
+            if (selectedQuality === 'great') finalUnitPrice = greatUnit;
+            if (selectedQuality === 'amazing') finalUnitPrice = amazingUnit;
+
+            let totalPrice = finalUnitPrice * currentQty;
+            document.getElementById('btn-add-final').innerText = `Add ${currentQty} to Cart - $${totalPrice.toFixed(2)}`;
+        }
+
+        function finalizeAddToCart() {
+            if(!pendingItem) return;
+            let qualityLabel = "Normal";
+            let qualityFee = 0;
+            if (selectedQuality === 'great') { qualityFee = qualitySurcharges.great; qualityLabel = "Great"; }
+            if (selectedQuality === 'amazing') { qualityFee = qualitySurcharges.amazing; qualityLabel = "Amazing"; }
+
+            let colorSurcharge = 0;
+            if (selectedColorObj.isDual) {
+                if (pendingItem.basePrice < 5.00) colorSurcharge = 1.00;
+                else colorSurcharge = 1.50;
+            }
+            
+            let unitPrice = pendingItem.basePrice + qualityFee + colorSurcharge;
+            let note = `Quality: ${qualityLabel}`;
+            
+            cart.push({
+                link: pendingItem.link,
+                name: pendingItem.name,
+                qty: currentQty,
+                color: selectedColorObj.name, 
+                notes: note,
+                price: unitPrice,
+                tag: pendingItem.category 
+            });
+
+            updateCartBadge();
+            showToast(`Added ${currentQty}x ${pendingItem.name}`);
+            closeModal('qualityModal');
+            pendingItem = null;
+        }
+
+        /* --- CORE FUNCTIONS --- */
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            if(pageId === 'home') document.getElementById('nav-home').classList.add('active');
+            if(pageId === 'prints') document.getElementById('nav-prints').classList.add('active');
+            if(pageId === 'restock') document.getElementById('nav-restock').classList.add('active');
+            if(pageId === 'seasonal') document.getElementById('nav-seasonal').classList.add('active');
+
+            const overlay = document.getElementById('tutorial-overlay');
+            if(overlay.style.display === 'block') {
+                const step = tutorialSteps[tutStep];
+                if(step.clickAction && step.page === 'home' && pageId === 'prints') nextTutorialStep();
+                if(step.clickAction && step.page === 'prints' && pageId === 'restock') nextTutorialStep();
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function openCart() {
+            renderCartList();
+            openModal('cartModal');
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if(query) window.open(`https://makerworld.com/en/search/models?keyword=${encodeURIComponent(query)}`, '_blank');
+        }
+
+        function renderCreatorsGrid() {
+            const grid = document.getElementById('creators-grid');
+            grid.innerHTML = '';
+            creatorPrints.forEach(print => grid.appendChild(createCard(print, false, 'Normal')));
+        }
+
+        function renderPrePrintedGrid() {
+            const grid = document.getElementById('pre-printed-grid');
+            grid.innerHTML = '';
+            if (prePrintedItems.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'empty-placeholder';
+                emptyDiv.innerText = "Nothing here yet...";
+                grid.appendChild(emptyDiv);
+            } else {
+                prePrintedItems.forEach(print => grid.appendChild(createCard(print, true, 'PrePrinted')));
+            }
+        }
+
+        function renderSeasonalGrid() {
+            const grid = document.getElementById('seasonal-grid');
+            grid.innerHTML = '';
+            seasonalConfig.items.forEach(print => grid.appendChild(createCard(print, false, 'Special')));
+        }
+
+        function createCard(print, isPrePrinted, typeLabel) {
+            const card = document.createElement('div');
+            card.className = 'print-card';
+            let statusBadge = '';
+            let magGlass = '';
+            let priceDisplay = print.price ? `$${print.price.toFixed(2)}` : 'N/A';
+            let addAction = '';
+
+            if(isPrePrinted) {
+                const statusClass = print.status === "Defect" ? "status-defect" : "status-unpaid";
+                statusBadge = `<div class="status-badge ${statusClass}">${print.status}</div>`;
+                const printData = encodeURIComponent(JSON.stringify(print));
+                magGlass = `<div class="magnify-hover-btn" onclick="openInspect('${printData}')" title="Inspect">🔍</div>`;
+                addAction = `quickAddPrePrinted('${print.link}', '${print.name}', '${print.status}', ${print.price})`;
+            } else {
+                addAction = `openQualityModal('${print.link}', '${print.name}', ${print.price}, '${typeLabel}')`;
+            }
+
+            card.innerHTML = `
+                <div class="card-image-container" onclick="window.open('${print.link}', '_blank')">
+                    <img src="${print.image}" class="card-image" alt="${print.name}">
+                    ${statusBadge}
+                </div>
+                <div class="card-details">
+                    <span class="card-title">${print.name}</span>
+                    <span class="card-price">${priceDisplay}</span>
+                </div>
+                ${magGlass}
+                <div class="add-hover-btn" onclick="${addAction}" title="Add to Cart">+</div>
+            `;
+            return card;
+        }
+
+        function openInspect(printData) {
+            const print = JSON.parse(decodeURIComponent(printData));
+            document.getElementById('inspect-img').src = print.image;
+            document.getElementById('inspect-name').innerText = print.name;
+            document.getElementById('inspect-color').innerText = print.color || "Unknown";
+            document.getElementById('inspect-status').innerText = print.status;
+            document.getElementById('inspect-price').innerText = print.price ? `$${print.price.toFixed(2)}` : 'N/A';
+            document.getElementById('inspect-status').style.color = (print.status === 'Defect') ? '#ff4444' : '#ffcc00';
+            openModal('inspectModal');
+        }
+
+        function quickAddPrePrinted(link, name, statusNote, price) {
+            let note = statusNote ? `[PRE-PRINTED: ${statusNote}]` : "";
+            cart.push({ link, name, qty: 1, color: "Black", notes: note, price: price, tag: 'PrePrinted' });
+            updateCartBadge();
+            showToast(`Added ${name}`);
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("toast");
+            t.innerText = msg;
+            t.className = "show";
+            setTimeout(()=> t.className = t.className.replace("show", ""), 2000);
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cart-badge-count').innerText = cart.length;
+            try { localStorage.setItem('thePrintCart', JSON.stringify(cart)); } catch(e){}
+        }
+
+        function renderCartList() {
+            const list = document.getElementById('cart-list');
+            list.innerHTML = '';
+            let total = 0;
+            if(cart.length===0) { list.innerHTML='<p style="text-align:center; color:#555">Empty</p>'; return; }
+
+            cart.forEach((item, i) => {
+                let lineTotal = 0;
+                if(item.price) lineTotal = (item.price * item.qty);
+                total += lineTotal;
+                let tagHtml = '';
+                if(item.tag === 'Special') tagHtml = `<span style="color:#ff0066; border:1px solid #ff0066; padding:0 4px; font-size:10px; border-radius:3px; margin-left:5px;">SPECIAL</span>`;
+                else if(item.tag === 'Normal') tagHtml = `<span style="color:#00F3FF; border:1px solid #00F3FF; padding:0 4px; font-size:10px; border-radius:3px; margin-left:5px;">NORMAL</span>`;
+
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div>
+                        <b>${item.name}</b> (x${item.qty}) ${tagHtml}
+                        <br><small style="color:#bbb">${item.color} | ${item.notes || ''}</small>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-family:monospace">$${lineTotal.toFixed(2)}</span>
+                        <button onclick="cart.splice(${i},1);renderCartList();updateCartBadge()" style="background:none;border:none;color:#555;cursor:pointer;margin-left:5px;">✕</button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            if(total>0) list.innerHTML += `<div style="text-align:right; color:#00F3FF; padding:10px; font-weight:bold; border-top:1px solid #333; margin-top:10px;">Total: $${total.toFixed(2)}</div>`;
+        }
+
+        function submitItemToCart() {
+            const link = document.getElementById('addItemLink').value;
+            const name = document.getElementById('addItemName').value || "Item";
+            const qty = document.getElementById('addItemQty').value;
+            const notes = document.getElementById('addItemNotes').value;
+            cart.push({ link, name, qty, color: "Custom", notes, price: 0, tag: 'Custom' });
+            document.getElementById('addItemLink').value = '';
+            document.getElementById('addItemLink').type = 'text'; // Reset masked input
+            updateCartBadge();
+            renderCartList();
+        }
+
+        function openCheckout() {
+            if(cart.length === 0) { alert("Cart is empty!"); return; }
+            closeModal('cartModal');
+            openModal('checkoutModal');
+            document.querySelectorAll('.pay-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('pay-step-1').classList.add('active');
+        }
+
+        function handlePayment(type) {
+            let url = "";
+            if(type === 'venmo') url = "https://venmo.com/code?user_id=4239203621668282296&created=1770685963";
+            if(type === 'paypal') url = "https://paypal.me/theprintco";
+            window.open(url, '_blank');
+            document.querySelectorAll('.pay-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('pay-step-2').classList.add('active');
+        }
+
+        function finishOrder() {
+            const orderNum = Math.floor(100000+Math.random()*900000);
+            let body = `ORDER #${orderNum}\n\n`;
+            let total = 0;
+            cart.forEach((item, i) => {
+                let linePrice = (item.price*item.qty);
+                if(item.price) total += linePrice;
+                let tag = item.tag ? `[${item.tag}]` : "";
+                body += `${i+1}. ${tag} ${item.name} (${item.color}) - Qty:${item.qty} - Unit:$${item.price.toFixed(2)} - Total:$${linePrice.toFixed(2)} - ${item.notes} - ${item.link}\n`;
+            });
+            if(total>0) body += `\nTOTAL: $${total.toFixed(2)}`;
+            window.open(`mailto:michaelroman30@wrsdk12.net?subject=Order ${orderNum}&body=${encodeURIComponent(body)}`, '_blank');
+            cart = [];
+            updateCartBadge();
+            document.querySelectorAll('.pay-step').forEach(s => s.classList.remove('active'));
+            document.getElementById('pay-step-3').classList.add('active');
+        }
+
+        let tutStep = 0;
+        const tutorialSteps = [
+            { page: 'home', target: '#searchInput', text: "Search all 3d models here.", clickAction: false },
+            { page: 'home', target: '.header-right', text: "Your Cart and Help menu are up here.", clickAction: false },
+            { page: 'home', target: '#nav-prints', text: "Click 'PRINTS' in the menu to view our collection.", clickAction: true },
+            { page: 'prints', target: '#creators-grid .print-card:first-child', text: "This is a Print Card. It shows the image and price.", clickAction: false },
+            { page: 'prints', target: '#creators-grid .print-card:first-child .add-hover-btn', text: "Hover and click '+' to Add. You can now choose Quality and Quantity!", clickAction: false, isHoverStep: true },
+            { page: 'prints', target: '#nav-restock', text: "Click 'RESTOCK' to see pre-printed or discounted items.", clickAction: true },
+            { page: 'restock', target: '.info-panel', text: "Check here for defects or unpaid items at a discount.", clickAction: false }
+        ];
+
+        function acceptTutorial() { document.getElementById('tutorial-notification').classList.remove('active'); startTutorial(); }
+        function declineTutorial() { document.getElementById('tutorial-notification').classList.remove('active'); try{localStorage.setItem('tutorialDone','true')}catch(e){} }
+        function startTutorial() { document.getElementById('tutorial-overlay').style.display='block'; tutStep=0; runStep(); }
+        function runStep() {
+            const step = tutorialSteps[tutStep];
+            if(!step.clickAction) switchPage(step.page);
+            const nextBtn = document.getElementById('tut-next-btn');
+            if(step.clickAction) nextBtn.classList.add('tut-btn-hidden'); else nextBtn.classList.remove('tut-btn-hidden');
+            document.querySelectorAll('.force-hover').forEach(el=>el.classList.remove('force-hover'));
+            setTimeout(() => {
+                const el = document.querySelector(step.target);
+                if(el) {
+                    if(step.isHoverStep) { const c = el.closest('.print-card'); if(c) c.classList.add('force-hover'); }
+                    el.scrollIntoView({behavior:"smooth",block:"center",inline:"center"});
+                    setTimeout(() => {
+                        const r = el.getBoundingClientRect();
+                        const s = document.getElementById('tut-spotlight');
+                        const b = document.getElementById('tut-box');
+                        s.style.width=(r.width+20)+'px'; s.style.height=(r.height+20)+'px';
+                        s.style.left=(r.left+(r.width/2)-(r.width+20)/2)+'px'; s.style.top=(r.top+(r.height/2)-(r.height+20)/2)+'px';
+                        document.getElementById('tut-text').innerText=step.text;
+                        let bt = r.bottom+40; if(bt+150>window.innerHeight) bt=r.top-180;
+                        let bl = r.left+(r.width/2)-140; if(bl<20) bl=20; if(bl+280>window.innerWidth) bl=window.innerWidth-300;
+                        b.style.top=bt+'px'; b.style.left=bl+'px';
+                    }, 100);
+                }
+            }, 400);
+        }
+        function nextTutorialStep() {
+            tutStep++;
+            if(tutStep >= tutorialSteps.length) {
+                document.querySelectorAll('.force-hover').forEach(el => el.classList.remove('force-hover'));
+                document.getElementById('tutorial-overlay').style.display = 'none';
+                try { localStorage.setItem('tutorialDone', 'true'); } catch(e){}
+                switchPage('home');
+            } else { runStep(); }
+        }
+
+        const cvs = document.getElementById('bgCanvas'), ctx = cvs.getContext('2d');
+        let w, h, pts = [];
+        window.onresize = resize;
+        function resize(){ w=cvs.width=window.innerWidth; h=cvs.height=window.innerHeight; pts=[]; for(let i=0;i<50;i++) pts.push({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5),vy:(Math.random()-.5)}); }
+        function draw(){
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle='#00F3FF';
+            pts.forEach(p=>{
+                p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>w)p.vx*=-1; if(p.y<0||p.y>h)p.vy*=-1;
+                ctx.beginPath(); ctx.arc(p.x,p.y,1.5,0,7); ctx.fill();
+                pts.forEach(p2=>{
+                    let d = Math.hypot(p.x-p2.x, p.y-p2.y);
+                    if(d<100) { ctx.strokeStyle=`rgba(0,243,255,${1-d/100})`; ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y); ctx.stroke(); }
+                });
+            });
+            requestAnimationFrame(draw);
+        }
+        
+        function downloadPrintFile(){const data={creator:creatorPrints,prePrinted:prePrintedItems};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data)],{type:"application/json"}));a.download="config.print";a.click();}
+        function loadPrintFile(i){const r=new FileReader();r.onload=(e)=>{try{const j=JSON.parse(e.target.result);if(j.creator){creatorPrints=j.creator;prePrintedItems=j.prePrinted || [];}renderCreatorsGrid();renderPrePrintedGrid();closeModal('adminModal');alert("Setup Loaded!");}catch(x){alert("Error loading file");}};if(i.files[0])r.readAsText(i.files[0]);}
+    </script>
+</body>
+</html>
+                            <script></script>
+                        </body>
+                    </html>
+                
