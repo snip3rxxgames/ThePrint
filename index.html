@@ -1,12 +1,4 @@
-
-                    <!DOCTYPE html>
-                    <html>
-                        <head>
-                            <meta charset="UTF-8">
-                            <style></style>
-                        </head>
-                        <body>
-                            <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -80,15 +72,20 @@
             justify-content: center;
             
             /* Position adjustment so the finger tip hits the button */
-            transform: translate(-15px, -5px); 
+            /* Adjusted for smaller size */
+            transform: translate(-10px, -2px); 
         }
 
         /* The 3D Hand Model (Emoji) */
         #custom-cursor.hover-active::before {
-            content: '👆'; /* This renders as a 3D model on Windows/Mac/Android */
-            font-size: 40px;
-            /* Add a cool sci-fi glow behind the real hand */
-            filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.6));
+            content: '👆'; 
+            /* SIZE: 60% of previous (40px -> 24px) */
+            font-size: 24px;
+            
+            /* COLOR: Filter to turn skin-tone into Light Blue */
+            /* Sepia makes it monochrome/brown, Hue Rotate shifts it to blue, Saturate makes it vivid */
+            filter: sepia(1) hue-rotate(190deg) saturate(500%) drop-shadow(0 0 5px rgba(0, 243, 255, 0.8));
+            
             animation: handPulse 2s infinite ease-in-out;
         }
 
@@ -99,7 +96,7 @@
 
         @keyframes handPulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
         }
 
         /* Click animation */
@@ -108,7 +105,7 @@
         }
         body.is-clicking #custom-cursor.hover-active {
             /* Tapping motion */
-            transform: translate(-15px, -5px) scale(0.9) rotate(-10deg);
+            transform: translate(-10px, -2px) scale(0.9) rotate(-10deg);
         }
 
         /* --- BACKGROUND --- */
@@ -1051,7 +1048,3 @@
     </script>
 </body>
 </html>
-                            <script></script>
-                        </body>
-                    </html>
-                
